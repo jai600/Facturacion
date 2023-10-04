@@ -1,0 +1,606 @@
+﻿@model Facturacion.Models.Facturas
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml"; // Ruta al layout
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>FormFacturas</title>
+
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+    <script>
+
+        var contador = 1;
+        var subtotal = 0;
+  
+        $(document).ready(function () {
+            // Lleva un registro de los detalles agregados
+
+
+            $("#Iva").on("change", function () {
+                var subtotal = $("#Subtotal").val();
+                var iva = $(this).val();
+                var Descuento = $("#TotalDescuento").val();
+                var calculo = calcularIva(subtotal, iva);
+                var total = subtotal;
+                $("#TotalImpuesto").val(calculo);
+                if (!isNaN(Descuento)) {
+                    total = parseFloat(total) + parseFloat(calculo) - parseFloat(Descuento);
+                } else {
+                    total = parseFloat(total) + parseFloat(calculo);
+                }
+
+                $("#Total").val(total);
+            });
+
+            $("#Descuento").on("change", function () {
+                debugger
+                var subtotal = $("#Subtotal").val();
+                var Desc = $(this).val();
+                var Impuesto = $("#TotalImpuesto").val();
+                var calculo = calculoDescuento(subtotal, Desc);
+                var total = subtotal;
+                $("#TotalDescuento").val(calculo);
+                if (!isNaN(Impuesto)) {
+                    total = parseFloat(total) + parseFloat(Impuesto) - parseFloat(calculo);
+                } else {
+                    total = parseFloat(total) - parseFloat(calculo);
+                }
+
+                $("#Total").val(total);
+
+            });
+
+            // Agregar detalle al hacer clic en el botón "+"
+            $('#agregarDetalle').click(function () {
+                debugger
+                // var total = parseFloat($("#txtprecio").val()) * parseFloat($("#txtcantidad").val())
+                var control = false;
+
+                control = ResaltarCampo("#IdProducto", control);
+                control = ResaltarCampo("#Cantidad", control);
+                control = ResaltarCampo("#PrecioUnitario", control);
+
+
+                if (control) {
+                    Swal.fire('¡Hola!', 'Completa los campos!', 'warning');
+                    return;
+                }
+
+                var controlCantidadPositiva = validarCampoPositivo("#Cantidad");
+
+                if (!controlCantidadPositiva) {
+                    Swal.fire('¡Hola!', 'Debes ingresar una cantidad mayor a 0 !', 'warning');
+                    return
+                }
+
+                var controlNoNegativoPrecio = validarCampoNoNegativo("#PrecioUnitario");
+
+                if (!controlNoNegativoPrecio) {
+                    Swal.fire('¡Hola!', 'El precio Unitario no puede ser negativo!', 'warning');
+                    return
+                }
+                var PrecioU = $("#PrecioUnitario").val();
+                var CantidadU = $("#Cantidad").val();
+                subtotal = parseInt(subtotal) + (parseFloat(PrecioU) * parseInt(CantidadU));
+
+                $("#Subtotal").val(subtotal);
+                $("#Total").val(subtotal);
+                validarPorcentajes();
+                $("#tablaDetalles tbody").append(
+
+                    $("<tr>").append(
+                        $("<td>").text($("#IdProducto").val()),
+                        $("<td>").text($("#Cantidad").val()),
+                        $("<td>").text($("#PrecioUnitario").val()),
+                        $("<td>").html("<button class='btn btn-danger quitarDetalle'>-</button>"),
+                    )
+
+                )
+                control = ResaltarCampo("#IdProducto", control);
+                control = ResaltarCampo("#Cantidad", control);
+                control = ResaltarCampo("#PrecioUnitario", control);
+
+
+                $("#IdProducto").val("")
+                $("#Cantidad").val("")
+                $("#PrecioUnitario").val("")
+            });
+
+            // Quitar detalle al hacer clic en el botón "-"
+            $('#tablaDetalles').on('click', '.quitarDetalle', function () {
+
+                var precioUnitario = $(this).closest('tr').find('td:eq(2)').text();
+                var cantidad = $(this).closest('tr').find('td:eq(1)').text();
+                subtotal = parseInt(subtotal) - (parseFloat(precioUnitario) * parseInt(cantidad));
+                $("#Subtotal").val(subtotal);
+                $("#Total").val(subtotal);
+                $(this).closest('tr').remove();
+                validarPorcentajes();
+
+            });
+
+
+
+
+
+            $("#BtnGuardaFactura").on("click", function () {
+                var control = false;
+                var controlCamposDetalle = false
+                var Detallesv = []
+                var total = 0;
+
+
+                $("#tablaDetalles > tbody > tr").each(function (i, tr) {
+
+                    Detallesv.push(
+                        {
+                            idProducto: $(tr).find('td:eq(0)').text(),
+                            Cantidad: $(tr).find('td:eq(1)').text(),
+                            PrecioUnitario: $(tr).find('td:eq(2)').text(),
+                            // Total: $(tr).find('td:eq(3)').text()
+
+                        }
+                    )
+                    //  total = total + parseFloat($(tr).find('td:eq(3)').text())
+
+                })
+
+                QuitarResaltarCampo("#IdProducto");
+                QuitarResaltarCampo("#Cantidad");
+                QuitarResaltarCampo("#PrecioUnitario");
+
+                control = ResaltarCampo("#NumeroFactura", control);
+                control = ResaltarCampo("#Fecha", control);
+                control = ResaltarCampo("#TipodePago", control);
+                control = ResaltarCampo("#DocumentoCliente", control);
+                control = ResaltarCampo("#NombreCliente", control);
+                control = ResaltarCampo("#Descuento", control);
+                control = ResaltarCampo("#Iva", control);
+
+
+                if (control) {
+                    Swal.fire('¡Hola!', 'Completa los campos', 'warning');
+                    return;
+                }
+
+                var controlProductos = $("#Subtotal").val();
+                if (controlProductos <= 0) {
+                    Swal.fire('¡Hola!', 'Debes agregar al menos un producto', 'warning');
+                    return
+                }
+
+                var controlFecha = validarFecha();
+
+                if (!controlFecha) {
+                    Swal.fire('¡Hola!', 'Debes ingresar una fecha mayor o igual al día', 'warning');
+                    return
+                }
+
+                var Fact = {
+                    FacturaV: {
+                        NumeroFactura: $("#NumeroFactura").val(),
+                        Fecha: $("#Fecha").val(),
+                        TipodePago: $("#TipodePago").val(),
+                        DocumentoCliente: $("#DocumentoCliente").val(),
+                        NombreCliente: $("#NombreCliente").val(),
+                        Subtotal: $("#Subtotal").val(),
+                        Descuento: $("#Descuento").val(),
+                        Iva: $("#Iva").val(),
+                        TotalDescuento: $("#TotalDescuento").val(),
+                        TotalImpuesto: $("#TotalImpuesto").val(),
+                        Total: $("#Total").val(),
+
+
+                    },
+                    DetallesV: Detallesv
+                }
+
+
+                jQuery.ajax({
+                    url: '@Url.Action("Guardar", "FacturaController1")',
+                    type: "POST",
+                    data: JSON.stringify(Fact),
+                    datatype: "json",
+                    contentType: "application/json; charset=utf-8",
+                    success: function (data) {
+
+                        if (data.respuesta) {
+
+                            Swal.fire('¡Hola!', 'Factura almacenada con éxito', 'success');
+                            LimpiarCampos();
+                        }
+
+                    },
+                    Error: function (err) {
+                        Swal.fire('¡Hola!', 'Se presento un error al guardar', 'error');
+                        console.log(err.message)
+                    }
+
+                })
+
+
+            })
+
+        });
+
+
+        function validarFecha(Ifecha) {
+            var Fecha = $(Ifecha).val();
+
+            // Obtener la fecha actual en formato YYYY-MM-DD
+            var fechaActual = new Date().toISOString().split('T')[0];
+
+            if (Fecha < fechaActual) {
+                // La fecha ingresada es menor que la fecha actual
+                $(Ifecha).css("border", "1px solid red");
+                return false;
+
+            }
+
+            return true;
+        }
+
+        function validarCampoPositivo(input) {
+            var valor = $(input).val();
+
+            if (valor <= 0) {
+                $(input).css("border", "1px solid red");
+                return false;
+            }
+            return true;
+        }
+
+        function validarCampoNoNegativo(input) {
+            var valor = $(input).val();
+
+            if (valor < 0) {
+                $(input).css("border", "1px solid red");
+                return false;
+            }
+            return true;
+        }
+
+        // Función para validar números
+        function validarSoloNumeros2() {
+
+            console.log("Función validarSoloNumeros llamada");
+            var inputValue = this.value;
+
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Delete' || e.key === 'Backspace') {
+                return;
+            }
+
+            if (!/^\d+$/.test(inputValue + key)) {
+                e.preventDefault();
+            }
+        }
+
+        function LimpiarCampos() {
+            $("#NumeroFactura").val("");
+            $("#Fecha").val("");
+            $("#TipodePago").val("");
+            $("#DocumentoCliente").val("");
+            $("#NombreCliente").val("");
+            $("#Subtotal").val(0);
+            $("#Descuento").val(0);
+            $("#Iva").val(0);
+            $("#TotalDescuento").val(0);
+            $("#TotalImpuesto").val(0);
+            $("#Total").val(0);
+
+            $("#tablaDetalles tbody").html("");
+        }
+
+        // Agregar el evento a todos los inputs con la clase 'solo-numeros'
+        var inputs = document.querySelectorAll('.numeros');
+
+        inputs.forEach(function (input) {
+            input.addEventListener('keydown', validarSoloNumeros2);
+        });
+
+        function ResaltarCampo(campo, control) {
+            debugger
+            var bool = false;
+
+            if (control)
+                bool = true;
+
+            var verificarDato = $(campo).val();
+            if (verificarDato == null || verificarDato == "") {
+                $(campo).css("border", "1px solid red");
+                bool = true;
+
+            } else {
+                $(campo).css("border", "#1px solid #000");
+            }
+
+            return bool;
+        }
+
+        function QuitarResaltarCampo(campo) {
+
+            $(campo).css("border", "#1px solid #000");
+
+        }
+
+        function validarSoloNumeros(input) {
+            // Obtenemos el valor actual del campo de entrada
+            var inputValue = input.value;
+
+            // Eliminamos cualquier carácter que no sea un número
+            input.value = inputValue.replace(/[^0-9]/g, '');
+        }
+
+        function calcularIva(subtotal, iva) {
+            if (!isNaN(iva)) {
+                var calculo = (parseFloat(subtotal) * parseInt(iva)) / 100;
+                return calculo;
+            } else {
+                return 0; // Devuelve 0 si el valor no es un número válido
+            }
+        }
+
+        function calculoDescuento(subtotal, Desc) {
+            if (!isNaN(Desc)) {
+                var calculo = (parseFloat(subtotal) * parseInt(Desc)) / 100;
+                return calculo;
+            } else {
+                return 0; // Devuelve 0 si el valor no es un número válido
+            }
+        }
+
+        function validarPorcentajes() {
+            var subtotal = $("#Subtotal").val();
+            var iva = $("#Iva").val();
+
+            var calculo = calcularIva(subtotal, iva);
+            var total = subtotal;
+            $("#TotalImpuesto").val(calculo);
+            total = parseFloat(total) + parseFloat(calculo);
+            $("#Total").val(total);
+
+
+            var subtotal = $("#Subtotal").val();
+            var Desc = $("#Descuento").val()
+
+            calculo = calculoDescuento(subtotal, Desc);
+
+            $("#TotalDescuento").val(calculo);
+            total = parseFloat(total) - parseFloat(calculo);
+            $("#Total").val(total);
+        }
+
+
+
+
+
+
+    </script>
+</head>
+<body>
+
+    <h1>Agregar Facturas</h1>
+    <hr />
+
+
+
+    <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+
+        <div class="card-body">
+            <div class="row">
+
+                <input type="hidden" id="idFactura" value="" />
+                <div class="col-sm-4">
+                    <label for="NumeroFactura" class="control-label">NumeroFactura</label>
+                    <input id="NumeroFactura" class="form-control" value="@Model.NumeroFactura" />
+                    <span for="NumeroFactura" class="text-danger"></span>
+                </div>
+
+                <div class="col-sm-4">
+                    <label for="Fecha" class="control-label">Fecha</label>
+                    <input id="Fecha" type="date" class="form-control" value="@Model.Fecha.ToString("yyyy-MM-dd")" />
+                    <span for="Fecha" class="text-danger"></span>
+                </div>
+
+
+                <div class="col-sm-4">
+                    <label for="TipodePago" class="control-label">TipodePago</label>
+                    <input id="TipodePago" class="form-control" value="@Model.TipodePago" />
+                    <span for="TipodePago" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label for="DocumentoCliente" class="control-label">DocumentoCliente</label>
+                        <input id="DocumentoCliente" class="form-control" value="@Model.DocumentoCliente" />
+                        <span for="DocumentoCliente" class="text-danger"></span>
+                    </div>
+                </div>
+
+
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label for="NombreCliente" class="control-label">NombreCliente</label>
+                        <input id="NombreCliente" class="form-control" value="@Model.NombreCliente" />
+                        <span for="NombreCliente" class="text-danger"></span>
+                    </div>
+                </div>
+
+
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label for="Subtotal" class="control-label">Subtotal</label>
+                        <input id="Subtotal" readonly value="@Model.Subtotal" class="form-control" />
+                        <span for="Subtotal" class="text-danger"></span>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row">
+
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label for="Descuento" class="control-label">Porcentaje Descuento %</label>
+                        <input id="Descuento" maxlength="2" value="@Model.Descuento" oninput="validarSoloNumeros(this)" class="form-control numeros" />
+                        <span for="Descuento" class="text-danger"></span>
+                    </div>
+
+                </div>
+
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label for="Iva" class="control-label">Porcentaje Iva %</label>
+                        <input id="Iva" class="form-control numeros" oninput="validarSoloNumeros(this)" value="@Model.Iva" maxlength="2" />
+                        <span for="Iva" class="text-danger"></span>
+                    </div>
+                </div>
+
+
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label for="TotalDescuento" class="control-label">TotalDescuento</label>
+                        <input id="TotalDescuento" class="form-control" value="@Model.TotalDescuento" readonly />
+                        <span for="TotalDescuento" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label for="TotalImpuesto" class="control-label">TotalImpuesto</label>
+                        <input id="TotalImpuesto" class="form-control" value="@Model.TotalImpuesto" readonly />
+                        <span for="TotalImpuesto" class="text-danger"></span>
+                    </div>
+                </div>
+
+
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label for="Total" class="control-label">Total</label>
+                        <input id="Total" class="form-control" value="@Model.Total" readonly />
+                        <span for="Total" class="text-danger"></span>
+                    </div>
+                </div>
+
+
+                <div class="col-sm-4"></div>
+            </div>
+
+
+
+            <h1>Detalles de Factura</h1>
+
+            <div class="container">
+                <div class="row">
+
+                    <div class="col-sm-3">
+                        <div class="form-group">
+                            <label for="IdProducto" class="control-label">IdProducto</label>
+                            <select id="IdProducto" class="form-control">
+                                <option value=""></option>
+                                @foreach (var producto in ViewBag.ListaPro as List<Productos>)
+                                {
+                                    <option value="@producto.idProducto">@producto.Producto</option>
+                                }
+
+                            </select>
+                            <span for="IdProducto" class="text-danger"></span>
+                        </div>
+                    </div>
+
+
+
+                    <div class="col-sm-3">
+                        <div class="form-group">
+                            <label for="Cantidad" class="control-label">Cantidad</label>
+                            <input id="Cantidad" class="form-control numeros" oninput="validarSoloNumeros(this)" />
+                            <span for="Cantidad" class="text-danger"></span>
+                        </div>
+                    </div>
+
+
+
+                    <div class="col-sm-3">
+                        <div class="form-group">
+                            <label for="PrecioUnitario" class="control-label">PrecioUnitario</label>
+                            <input id="PrecioUnitario" class="form-control numeros" oninput="validarSoloNumeros(this)" />
+                            <span for="PrecioUnitario" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-3">
+                        <input id="agregarDetalle" type="button" value="Agregar Producto" class="btn btn-success">
+                    </div>
+
+
+
+
+                </div>
+            </div>
+
+
+
+
+            <table id="tablaDetalles" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio Unitario</th>
+                        @*  <th>Subtotal</th> *@
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var detallefactura in ViewBag.ListaDetalles as List<Detalles>)
+                           {
+                               <tr>
+                                   <td>@detallefactura.idProducto</td>
+                                   <td>@detallefactura.Cantidad</td>
+                                   <td>@detallefactura.PrecioUnitario</td>
+                                   <td><button class='btn btn-danger quitarDetalle'>-</button></td>
+                               </tr>
+                        
+                       }
+                </tbody>
+            </table>
+
+            <div class="form-group">
+                <button id="BtnEditarFactura" class="btn btn-primary">Editar Factura</button>
+            </div>
+
+
+        </div>
+
+    </div>
+
+    <div>
+        @*    <a asp-action="Index">LISTAR FACTURAS</a> *@
+    </div>
+
+
+</body>
+
+<br />
+
+<br />
+<br />
+<br />
+<br />
+<br />
+</html>
