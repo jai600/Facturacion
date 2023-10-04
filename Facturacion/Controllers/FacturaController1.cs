@@ -33,16 +33,7 @@ namespace Facturacion.Controllers
 
         public ActionResult FormFacturas(int id = 0)
         {
-            //var factura = new Facturas
-            //{
-            //    // Otras propiedades de la factura
-            //    DetalleFactura = new List<Detalles>() // Inicializa la lista de detalles
-            //};
-
-            //List<Productos> Pro = new List<Productos>();
-            //Pro = _facturaContext.Producto.ToList();
-            //@ViewBag.ListaPro = Pro;
-            //return PartialView(factura);
+          
 
             var factura = new Facturas
             {
@@ -161,10 +152,31 @@ namespace Facturacion.Controllers
             }
         }
 
-        // GET: FacturaController1/Delete/5
-        public ActionResult Delete(int id)
+        [HttpPost]
+        public async Task<IActionResult> ElimninarFactura(int Id)
         {
-            return View();
+
+            try
+            {
+                var result = await _facturaContext.Factura.FindAsync(Id);
+
+                if (result == null)
+                {
+                    return Json(new { respuesta = "No hay factura registrada con este Id!" });
+                }
+                else
+                {
+                    _facturaContext.Factura.Remove(result);
+                    await _facturaContext.SaveChangesAsync();
+                    return Json(new { respuesta = "No hay factura registrada con este Id!" });
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+          
+           
         }
 
         // POST: FacturaController1/Delete/5

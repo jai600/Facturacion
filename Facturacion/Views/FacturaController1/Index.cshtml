@@ -21,6 +21,30 @@
             window.location.href = url;
 
         }
+
+        function EliminarFactura(IdFactura){
+
+            var id = IdFactura;
+            jQuery.ajax({
+                url: '@Url.Action("ElimninarFactura", "FacturaController1")',
+                type: "POST",
+                data: { Id: id },             
+                success: function (data) {
+
+                    if (data.respuesta) {
+
+                        Swal.fire('¡Advertencia!', 'Factura almacenada con éxito', 'success');
+                        LimpiarCampos();
+                    }
+
+                },
+                Error: function (err) {
+                    Swal.fire('¡Advertencia!', 'Se presento un error al guardar', 'error');
+                    console.log(err.message)
+                }
+
+            })
+        }
     </script>
 </head>
 <body>
@@ -45,7 +69,7 @@
                         <td>@producto.NumeroFactura</td>
                         <td>@producto.NombreCliente</td>
                         <td>@producto.Total.ToString("C")</td> <!-- Formatea el precio como moneda -->
-                        <td><button class="btn-warning" onclick="EditarRegistro(@producto.idFactura)">Editar</button></td>
+                        <td><button class="btn-warning" onclick="EditarRegistro(@producto.idFactura)">Editar</button> <button class="btn-danger" onclick="EliminarFactura(@producto.idFactura)">Eliminar</button></td>
                     </tr>
                 }
             </tbody>
