@@ -2,6 +2,10 @@
 
 namespace Facturacion.Models
 {
+
+   
+    //  Modelo Productos del contexto de base de datos
+  
     public class Productos
     {
         [Key]

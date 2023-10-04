@@ -6,48 +6,80 @@
 <head>
     <meta name="viewport" content="width=device-width" />
     <title>Listado de Productos</title>
-    <!-- Agrega los enlaces a los archivos CSS de Bootstrap -->
-    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+  
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+        //Funcion para redirigir al formulario de factruras
         function AgregarFacturaVista() {
             window.location.href = '@Url.Action("FormFacturas","FacturaController1")';
         }
 
+        //Funcion para redirigir al formulario de factruras con la opcion de modificarla
         function EditarRegistro(IdFactura) {
-
-            var id = IdFactura; // El valor del parámetro que deseas pasar
+            var id = IdFactura; 
             var url = '@Url.Action("FormFacturas", "FacturaController1", new { id = "placeholder" })'.replace("placeholder", id);
             window.location.href = url;
-
         }
 
+        //Funcion eliminar factura
         function EliminarFactura(IdFactura){
 
             var id = IdFactura;
-            jQuery.ajax({
-                url: '@Url.Action("ElimninarFactura", "FacturaController1")',
-                type: "POST",
-                data: { Id: id },             
-                success: function (data) {
 
-                    if (data.respuesta) {
+            //Se realizar un mensaje de confirmacion de eliminar el registro
+            Swal.fire({
+                title: '¿Estás seguro de eliminar la factura seleccionada?',
+                text: 'Esta acción no se puede deshacer.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, continuar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
 
-                        Swal.fire('¡Advertencia!', 'Factura almacenada con éxito', 'success');
-                        LimpiarCampos();
-                    }
+                    //En caso se confirmado se procede a solitar al metodo del controlador que registro de Factura debe ser borrado del contexto de base de datos
+                    jQuery.ajax({
+                        url: '@Url.Action("ElimninarFactura", "FacturaController1")',
+                        type: "POST",
+                        data: { Id: id },
+                        success: function (data) {
 
-                },
-                Error: function (err) {
-                    Swal.fire('¡Advertencia!', 'Se presento un error al guardar', 'error');
-                    console.log(err.message)
-                }
+                            if (data.respuesta) {
 
-            })
+                                Swal.fire({
+                                    title: '¡Confirmación!',
+                                    text: data.respuesta,
+                                    icon: 'success',
+                                    showCancelButton: false,
+                                    confirmButtonText: 'Aceptar'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+
+                                        //Una vez eliminada  la factura y aceptado el mensaje de salida se hace el actualizado de la lista de facturas
+                                        location.reload();
+                                    }
+                                });
+                            }
+
+                        },
+                        Error: function (err) {
+                            Swal.fire('¡Advertencia!', 'Se presento un error al eliminar', 'error');
+                            console.log(err.message)
+                        }
+
+                    })
+                   
+                } 
+            });
+
+           
         }
     </script>
 </head>
 <body>
+
+   @*  Tabla que mostrara el listado de facturas incial alamacenadas en base de datos *@
     <div class="card-body">
         <h2>Listado de facturas</h2>
         <table class="table table-striped table-bordered">
@@ -61,21 +93,21 @@
                 </tr>
             </thead>
             <tbody>
+             @*    Se toman los campos del modelo que solo queremos mostrar *@
                 @foreach (var producto in Model)
                 {
                     <tr>
-                       
-                        <td>@producto.Fecha.ToString("yyyy-MM-dd")</td>
+                        <td>@producto.Fecha.ToString("dd-MM-yyyy") @* la fecha se muestra con el formato espeficico *@</td>
                         <td>@producto.NumeroFactura</td>
                         <td>@producto.NombreCliente</td>
-                        <td>@producto.Total.ToString("C")</td> <!-- Formatea el precio como moneda -->
-                        <td><button class="btn-warning" onclick="EditarRegistro(@producto.idFactura)">Editar</button> <button class="btn-danger" onclick="EliminarFactura(@producto.idFactura)">Eliminar</button></td>
+                        <td>@producto.Total.ToString("C")</td> @*  Formatea el total como moneda  *@
+                        <td><button class="btn btn-warning" onclick="EditarRegistro(@producto.idFactura)">Editar</button> <button class="btn btn-danger" onclick="EliminarFactura(@producto.idFactura)">Eliminar</button></td>
                     </tr>
                 }
             </tbody>
         </table>
 
-        <button class="btn-primary" onclick="AgregarFacturaVista()"> Agregar</button>
+        <button class="btn btn-primary" onclick="AgregarFacturaVista()"> Agregar</button>
     </div>
 </body>
 </html>

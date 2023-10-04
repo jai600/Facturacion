@@ -24,16 +24,18 @@
         var subtotal = 0;
         var productosDetalle = 0;
         var DetalleExistente = 0;
+
+       
         $(document).ready(function () {
-            // Lleva un registro de los detalles agregados
-            debugger
+            
+            // Contamos los detalles de la factura almacenados         
             $("#tablaDetalles > tbody > tr").each(function (i, tr) {
 
                 DetalleExistente++;
 
             })
 
-
+            //Calculamos el valor del iva y lo sumamos al total
             $("#Iva").on("change", function () {
                 var subtotal = $("#Subtotal").val();
                 var iva = $(this).val();
@@ -50,6 +52,7 @@
                 $("#Total").val(total);
             });
 
+            //Calculamos el valor del descuento y lo sumamos al total
             $("#Descuento").on("change", function () {
                 debugger
                 var subtotal = $("#Subtotal").val();
@@ -68,49 +71,56 @@
 
             });
 
-            // Agregar detalle al hacer clic en el botón "+"
+            // Agregar detalle 
             $('#agregarDetalle').click(function () {
-                debugger
-                // var total = parseFloat($("#txtprecio").val()) * parseFloat($("#txtcantidad").val())
+                
                 var control = false;
 
+                // Validamos los 3 campos que esten llenos
                 control = ResaltarCampo("#IdProducto", control);
                 control = ResaltarCampo("#Cantidad", control);
                 control = ResaltarCampo("#PrecioUnitario", control);
 
-
+                //Control por campos vacios
                 if (control) {
                     Swal.fire('¡Advertencia!', 'Completa los campos!', 'warning');
                     return;
                 }
 
+                //Validamos que la cantidad sea positiva
                 var controlCantidadPositiva = validarCampoPositivo("#Cantidad");
-
                 if (!controlCantidadPositiva) {
                     Swal.fire('¡Advertencia!', 'Debes ingresar una cantidad mayor a 0 !', 'warning');
                     return
                 }
 
+                //Validamos que el precio unitario no sea negativo
                 var controlNoNegativoPrecio = validarCampoNoNegativo("#PrecioUnitario");
-
                 if (!controlNoNegativoPrecio) {
                     Swal.fire('¡Advertencia!', 'El precio Unitario no puede ser negativo!', 'warning');
                     return
                 }
+                //Calculamos el subtotal
                 var PrecioU = $("#PrecioUnitario").val();
                 var CantidadU = $("#Cantidad").val();
                 subtotal = parseFloat(subtotal) + (parseFloat(PrecioU) * parseInt(CantidadU));
-                var buscarIdFactura = $("#idFactura").val();
 
+
+                //Buscamos si existe idFactura esto para verificar en caso sea modificar factura sumamos el total almacenado con los nuevos productos agregados
+                var buscarIdFactura = $("#idFactura").val();
                 if (buscarIdFactura != 0) {
-                    var valorTotal = ReemplazarComaPuntoSimple($("#Total").val());
+                    var valorTotal = ReemplazarComaPuntoSimple($("#Subtotal").val());
                     subtotal = parseFloat(subtotal) + parseFloat(valorTotal);
                 }
 
                 $("#Subtotal").val(subtotal);
                 $("#Total").val(subtotal);
+
+                //Validamos los valores de porcentajes que esten correctamente calculados con el llamado de esta funcion
                 validarPorcentajes();
                
+
+                //Agregamos el registro del producto a la tablaDetalles
                 $("#tablaDetalles tbody").append(
 
                     $("<tr>").append(
@@ -122,12 +132,15 @@
 
                 )
 
+                //Incrementamos el contadore de detalles agregados
                 productosDetalle++;
+
+                //QUitamos el resalto de campos en rojo por validacion en caso esten en rojo.
                 control = ResaltarCampo("#IdProducto", control);
                 control = ResaltarCampo("#Cantidad", control);
                 control = ResaltarCampo("#PrecioUnitario", control);
 
-
+                //limpiamos los campos agregados a detalle
                 $("#IdProducto").val("")
                 $("#Cantidad").val("")
                 $("#PrecioUnitario").val("")
@@ -136,6 +149,8 @@
             // Quitar detalle al hacer clic en el botón "-"
             $('#tablaDetalles').on('click', '.quitarDetalle', function () {
 
+
+                //Se realizan los ajustes de los totales correspondientes, en caso se quiten de la lista de detalles registros
                 var precioUnitario = $(this).closest('tr').find('td:eq(2)').text();
                 var cantidad = $(this).closest('tr').find('td:eq(1)').text();
                 subtotal = parseInt(subtotal) - (parseFloat(precioUnitario) * parseInt(cantidad));
@@ -147,48 +162,33 @@
 
             });
 
-
-
-
-
+            //Funcion para guardar la factura
             $("#BtnGuardaFactura").on("click", function () {
                 var control = false;
                 var controlCamposDetalle = false
                 var Detallesv = []
                 var total = 0;
                 var contador = 1;
-                debugger
+
+                //Se leeran los datos del detalle agregados nuevos para la informacion almacenar en caso existan registros agregados
                 if (productosDetalle > 0) {
-
-
-                    $("#tablaDetalles > tbody > tr").each(function (i, tr) {
-                       
-
+                    $("#tablaDetalles > tbody > tr").each(function (i, tr) {                       
+                        //Se establece un contador para excluir registros del detalle en la opcion de editar factura  ya alamcenadas
                         if (contador > DetalleExistente) {
 
                             Detallesv.push(
                                 {
                                     idProducto: $(tr).find('td:eq(0)').text(),
                                     Cantidad: $(tr).find('td:eq(1)').text(),
-                                    PrecioUnitario: ReemplazarComaPuntoSimple($(tr).find('td:eq(2)').text()),
-                                    // Total: $(tr).find('td:eq(3)').text()
-
+                                    PrecioUnitario: ReemplazarComaPuntoSimple($(tr).find('td:eq(2)').text()), 
                                 }
                             )
                         }
-
-
                         contador++;
-
-                        // Reinicia el contador cuando llega a la cantidad de elementos a omitir
-                        // if (contador >= DetalleExistente) {
-                        //     contador = 0;
-                        // }
-
                     })
-               }
+                }
                
-
+                //Se quitan los resaltos de los campos de detalle de producto por validar los campos principales de la factura
                 QuitarResaltarCampo("#IdProducto");
                 QuitarResaltarCampo("#Cantidad");
                 QuitarResaltarCampo("#PrecioUnitario");
@@ -208,31 +208,35 @@
                 }
                 var buscarIdFactura = $("#idFactura").val();
 
+                //Se valida antes de guardar si se han agregado productos a la tabla de detalles, si es modificacion de factura, validara los almacenados
                 var controlProductos = $("#Subtotal").val();
                 if (productosDetalle <= 0 && buscarIdFactura == 0) {
                     Swal.fire('¡Advertencia!', 'Debes agregar al menos un producto', 'warning');
                     return
                 }
 
-                var controlFecha = validarFecha();
+                //Validamos que la fecha sea mayor o igual al dia.
+                var controlFecha = validarFecha("#Fecha");
 
                 if (!controlFecha) {
                     Swal.fire('¡Advertencia!', 'Debes ingresar una fecha mayor o igual al día', 'warning');
                     return
                 }
              
-               
+                //Accion 1 Guardar
                 var accion = 1;
 
+                //Verificamos si la vista carga en modo Edicion de factura si el idFactura del modelo es disitinto a 0, se aplizara como modificacion de factura.
                 if (buscarIdFactura !=0)
                     accion = 2;
 
+                //Reeplazamos las comas por puntos de las cadena de texto.
                 var SubtotalV = ReemplazarComaPunto("#Subtotal");
                 var TotalDescuentoV = ReemplazarComaPunto("#TotalDescuento");
                 var TotalImpuestoV = ReemplazarComaPunto("#TotalImpuesto");
                 var TotalV = ReemplazarComaPunto("#Total");
              
-
+                //Objeto Fact que tendra la informacion a guardar o actualizar de la factura segun sea la operacion  
                 var Fact = {
                     idFactura: buscarIdFactura,
                     FacturaV: {
@@ -254,12 +258,8 @@
                     DetallesV: Detallesv
                 }
 
-                // var resultFact = JSON.stringify(Fact);
-                // var datos = {
-                //     Fact: resultFact,
-                //     TipoAccion: accion // Aquí estableces el valor del entero
-                // };
-
+           
+                //Ajax para enviar la solicitud a servidor con metodo post y guardar los datos de factura
                 jQuery.ajax({
                     url: '@Url.Action("Guardar", "FacturaController1")',
                     type: "POST",
@@ -267,28 +267,35 @@
                     datatype: "json",
                     contentType: "application/json; charset=utf-8",
                     success: function (data) {
-
-                        if (data.respuesta) {
-
-                            Swal.fire('¡Advertencia!', 'Factura almacenada con éxito', 'success');
-                            LimpiarCampos();
-                        }
-
+                      
+                            Swal.fire({
+                                title: '¡Confirmación!',
+                                text: data.respuesta,
+                                icon: 'success',
+                                showCancelButton: false, 
+                                confirmButtonText: 'Aceptar'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                   
+                                    window.location.href = '@Url.Action("Index", "FacturaController1")';
+                                }
+                            });
+                      
                     },
                     Error: function (err) {
                         Swal.fire('¡Advertencia!', 'Se presento un error al guardar', 'error');
                         console.log(err.message)
                     }
 
-                })
+                }) // Cierre de jquery Ajax
 
 
-            })
+            }) //Cierre Guardar Factura
 
-        });
+        }); //Cierre del cargado del documento
 
+        //Funcion para reemplazar comas por puntos en un valor de cualquier input enviado
         function ReemplazarComaPunto(input) {
-
 
             var PuntoxComa = $(input).val();
             PuntoxComa = PuntoxComa.replace(",", ".");
@@ -296,6 +303,7 @@
             return PuntoxComa;
         }
 
+        //Funcion para reemplazar comas por puntos en una cadena de texto directo
         function ReemplazarComaPuntoSimple(input) {
            
             var result = input.replace(",", ".");
@@ -303,6 +311,7 @@
             return result;
         }
 
+        //Funcion para validar que la fecha no sea menor a la fecha del día
         function validarFecha(Ifecha) {
             var Fecha = $(Ifecha).val();
 
@@ -319,6 +328,7 @@
             return true;
         }
 
+        //Funcion para validar si el valor de un campo es mayor igual a 0
         function validarCampoPositivo(input) {
             var valor = $(input).val();
 
@@ -329,6 +339,7 @@
             return true;
         }
 
+        //Funcion para validar si el valor de un campo no sea negativo
         function validarCampoNoNegativo(input) {
             var valor = $(input).val();
 
@@ -338,22 +349,8 @@
             }
             return true;
         }
-
-        // Función para validar números
-        function validarSoloNumeros2() {
-
-            console.log("Función validarSoloNumeros llamada");
-            var inputValue = this.value;
-
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Delete' || e.key === 'Backspace') {
-                return;
-            }
-
-            if (!/^\d+$/.test(inputValue + key)) {
-                e.preventDefault();
-            }
-        }
-
+     
+        //Funcion para limpiar los campos
         function LimpiarCampos() {
             $("#NumeroFactura").val("");
             $("#Fecha").val("");
@@ -368,15 +365,9 @@
             $("#Total").val(0);
 
             $("#tablaDetalles tbody").html("");
-        }
+        }       
 
-        // Agregar el evento a todos los inputs con la clase 'solo-numeros'
-        var inputs = document.querySelectorAll('.numeros');
-
-        inputs.forEach(function (input) {
-            input.addEventListener('keydown', validarSoloNumeros2);
-        });
-
+        //Funcion para resaltar los campos en rojo e indicar que campos requieren ser completados 
         function ResaltarCampo(campo, control) {
             debugger
             var bool = false;
@@ -390,18 +381,20 @@
                 bool = true;
 
             } else {
-                $(campo).css("border", "#1px solid #000");
+                $(campo).css("border", "1px solid #CCC");
             }
 
             return bool;
         }
 
+        //Funcion para quitar el resaltado en rojo de los campos que ya validan
         function QuitarResaltarCampo(campo) {
 
-            $(campo).css("border", "#1px solid #000");
+            $(campo).css("border", "1px solid #CCC");
 
         }
 
+        //Funcion para validar solo numeros en los campos correspondientes
         function validarSoloNumeros(input) {
             // Obtenemos el valor actual del campo de entrada
             var inputValue = input.value;
@@ -410,6 +403,7 @@
             input.value = inputValue.replace(/[^0-9]/g, '');
         }
 
+        //Funcion para calcular iva
         function calcularIva(subtotal, iva) {
             if (!isNaN(iva)) {
                 var calculo = (parseFloat(subtotal) * parseInt(iva)) / 100;
@@ -419,6 +413,7 @@
             }
         }
 
+        //Funcion para calcular descuento
         function calculoDescuento(subtotal, Desc) {
             if (!isNaN(Desc)) {
                 var calculo = (parseFloat(subtotal) * parseInt(Desc)) / 100;
@@ -428,7 +423,9 @@
             }
         }
 
+        //Funcion para validar que los calculos de iva y descuento se apliquen correctamente en los campos de totales
         function validarPorcentajes() {
+
             var subtotal = $("#Subtotal").val();
             var iva = $("#Iva").val();
 
@@ -443,16 +440,10 @@
             var Desc = $("#Descuento").val()
 
             calculo = calculoDescuento(subtotal, Desc);
-
             $("#TotalDescuento").val(calculo);
             total = parseFloat(total) - parseFloat(calculo);
             $("#Total").val(total);
         }
-
-
-
-
-
 
     </script>
 </head>
@@ -461,8 +452,7 @@
     <h1>Agregar Facturas</h1>
     <hr />
 
-
-
+   @*  formulario para creacion y modificacion de facturas *@
     <div class="d-flex justify-content-center align-items-center" style="min-height: 100vh;">
 
         <div class="card-body">
@@ -471,12 +461,14 @@
                 <input type="hidden" id="idFactura" value="@Model.idFactura" />
                 <div class="col-sm-4">
                     <label for="NumeroFactura" class="control-label">NumeroFactura</label>
+
+                    @* se verifica si se retornan datos de detalles en el modelo (Esto identifica si es modificacion de factura o guardar nueva)  *@
                     @{
                         if (ViewBag.ListaDetalles != null)
                         {
                                                 <input id="NumeroFactura" class="form-control" value="@Model.NumeroFactura" />
                         }else {
-                                                <input id="NumeroFactura" class="form-control" value="" />
+                                                <input id="NumeroFactura" class="form-control" value="" maxlength="10" />
                         }
                     }
                     
@@ -485,6 +477,8 @@
 
                 <div class="col-sm-4">
                     <label for="Fecha" class="control-label">Fecha</label>
+
+                    @* se verifica si se retornan datos de detalles en el modelo (Esto identifica si es modificacion de factura o guardar nueva)  *@
                     @{
                         if (ViewBag.ListaDetalles != null)
                         {
@@ -500,7 +494,7 @@
 
                 <div class="col-sm-4">
                     <label for="TipodePago" class="control-label">TipodePago</label>
-                    <input id="TipodePago" class="form-control" value="@Model.TipodePago" />
+                    <input id="TipodePago" class="form-control" value="@Model.TipodePago" maxlength="30" />
                     <span for="TipodePago" class="text-danger"></span>
                 </div>
             </div>
@@ -509,7 +503,7 @@
                 <div class="col-sm-4">
                     <div class="form-group">
                         <label for="DocumentoCliente" class="control-label">DocumentoCliente</label>
-                        <input id="DocumentoCliente" class="form-control" value="@Model.DocumentoCliente" />
+                        <input id="DocumentoCliente" class="form-control" value="@Model.DocumentoCliente" maxlength="20"/>
                         <span for="DocumentoCliente" class="text-danger"></span>
                     </div>
                 </div>
@@ -518,7 +512,7 @@
                 <div class="col-sm-4">
                     <div class="form-group">
                         <label for="NombreCliente" class="control-label">NombreCliente</label>
-                        <input id="NombreCliente" class="form-control" value="@Model.NombreCliente" />
+                        <input id="NombreCliente" class="form-control" value="@Model.NombreCliente" maxlength="50" />
                         <span for="NombreCliente" class="text-danger"></span>
                     </div>
                 </div>
@@ -595,6 +589,8 @@
                     <div class="col-sm-3">
                         <div class="form-group">
                             <label for="IdProducto" class="control-label">IdProducto</label>
+
+                             @* Lista de productos almacenados en la tabla productos  *@
                             <select id="IdProducto" class="form-control">
                                 <option value=""></option>
                                 @foreach (var producto in ViewBag.ListaPro as List<Productos>)
@@ -612,7 +608,7 @@
                     <div class="col-sm-3">
                         <div class="form-group">
                             <label for="Cantidad" class="control-label">Cantidad</label>
-                            <input id="Cantidad" class="form-control numeros" oninput="validarSoloNumeros(this)" />
+                            <input id="Cantidad" class="form-control numeros" oninput="validarSoloNumeros(this)" maxlength="10" />
                             <span for="Cantidad" class="text-danger"></span>
                         </div>
                     </div>
@@ -622,7 +618,7 @@
                     <div class="col-sm-3">
                         <div class="form-group">
                             <label for="PrecioUnitario" class="control-label">PrecioUnitario</label>
-                            <input id="PrecioUnitario" class="form-control numeros" oninput="validarSoloNumeros(this)" />
+                            <input id="PrecioUnitario" class="form-control numeros" oninput="validarSoloNumeros(this)" maxlength="19" />
                             <span for="PrecioUnitario" class="text-danger"></span>
                         </div>
                     </div>
@@ -645,25 +641,29 @@
                     <tr>
                         <th>Producto</th>
                         <th>Cantidad</th>
-                        <th>Precio Unitario</th>
-                        @*  <th>Subtotal</th> *@
+                        <th>Precio Unitario</th>                   
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
+                   
+                   @*  En caso se determine que la lista de detalles trae información desde el servidor se imprimira 
+                       (esto diferencia que es modificacion de factura y no guardado) 
+                       si es guardado de factura cargara eb blanco la tabla de detalles
+                    *@
+                    
                     @{
                         if (ViewBag.ListaDetalles != null)
                         {
-                                                    @foreach (var detallefactura in ViewBag.ListaDetalles as List<Detalles>)
-                            {
-                                                        <tr>
-                                                            <td>@detallefactura.idProducto</td>
-                                                            <td>@detallefactura.Cantidad</td>
-                                                            <td>@detallefactura.PrecioUnitario</td>
-                                                            <td><button class='btn btn-danger quitarDetalle'>-</button></td>
-                                                        </tr>
-
-                            }
+                             @foreach (var detallefactura in ViewBag.ListaDetalles as List<Detalles>)
+                               {
+                                     <tr>
+                                        <td>@detallefactura.idProducto</td>
+                                        <td>@detallefactura.Cantidad</td>
+                                        <td>@detallefactura.PrecioUnitario</td>
+                                        <td></td>
+                                     </tr>
+                               }
                         }
 
                     }
@@ -673,14 +673,15 @@
 
             <div class="form-group">
 
+            @*     se determina si es modificacion o guardado para que aparezca el boton apropiado *@
                 @{
                     if (ViewBag.ListaDetalles != null)
                     {
-                                        <button id="BtnGuardaFactura" class="btn btn-primary">Editar Factura</button>
+                        <button id="BtnGuardaFactura" class="btn btn-primary">Editar Factura</button>
                     }
                     else
                     {
-                                        <button id="BtnGuardaFactura" class="btn btn-primary">Guardar Factura</button>
+                        <button id="BtnGuardaFactura" class="btn btn-primary">Guardar Factura</button>
                     }
                 }
                    
@@ -691,18 +692,9 @@
 
     </div>
 
-    <div>
-        @*    <a asp-action="Index">LISTAR FACTURAS</a> *@
-    </div>
-
-
 </body>
 
 <br />
 
-<br />
-<br />
-<br />
-<br />
 <br />
 </html>

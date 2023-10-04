@@ -4,8 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+
 builder.Services.AddControllersWithViews();
+
+//Se le especifica al contexto que cadena de conexion tomara para realizar el modelado de base de datos.
 builder.Services.AddDbContext<FacturaContext>(options =>
 
     options.UseSqlServer(builder.Configuration.GetConnectionString("BillConnection"))
@@ -19,7 +21,7 @@ using (var scope = app.Services.CreateScope())
   context.Database.Migrate();
 }
 
- // Configure the HTTP request pipeline.
+ 
  if (!app.Environment.IsDevelopment())
  {
      app.UseExceptionHandler("/Home/Error");

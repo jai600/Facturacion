@@ -3,6 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Facturacion.Models
 {
+
+    //Modelo detalles del contexto de base de datos
     public class Detalles
     {
 

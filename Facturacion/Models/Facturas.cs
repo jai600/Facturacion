@@ -1,7 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
 namespace Facturacion.Models
-{
+{    
+    
+   
+    //  Modelo Facturas del contexto de base de datos
+  
     public class Facturas
     {
         [Key]
@@ -33,13 +37,13 @@ namespace Facturacion.Models
         [Required]
         public decimal Total {  get; set; }
 
-
+        //Almacenar los detalles con el modelado de base de datos
         public Facturas()
         {
             DetalleFactura = new HashSet<Detalles>();
         }
 
         public virtual ICollection<Detalles> DetalleFactura { get; set; }
-       // public List<Detalles>? Detalles { get; set; }
+       
     }
 }
