@@ -466,9 +466,9 @@
                     @{
                         if (ViewBag.ListaDetalles != null)
                         {
-                                                <input id="NumeroFactura" class="form-control" value="@Model.NumeroFactura" />
+                                   <input id="NumeroFactura" class="form-control" value="@Model.NumeroFactura" oninput="validarSoloNumeros(this)" />
                         }else {
-                                                <input id="NumeroFactura" class="form-control" value="" maxlength="10" />
+                                   <input id="NumeroFactura" class="form-control" value="" maxlength="10" oninput="validarSoloNumeros(this)" />
                         }
                     }
                     
@@ -494,7 +494,30 @@
 
                 <div class="col-sm-4">
                     <label for="TipodePago" class="control-label">TipodePago</label>
-                    <input id="TipodePago" class="form-control" value="@Model.TipodePago" maxlength="30" />
+                    @* <input id="TipodePago" class="form-control" value="@Model.TipodePago" maxlength="30" /> *@
+
+                    <select class="form-control" id="TipodePago"> 
+                        @{
+                           
+                            if(Model.TipodePago=="Contado")
+                            {
+                                <option value="Contado" selected>Contado</option>
+                                <option value="Credito">Credito</option>
+                            }
+                            else if (Model.TipodePago == "Credito")
+                            {
+                                <option value="Contado">Contado</option>
+                                <option value="Credito" selected>Credito</option>
+                            }
+                            else
+                            {
+                                <option value=""></option>
+                                <option value="Contado">Contado</option>
+                                <option value="Credito">Credito</option>
+                            }
+                        }
+                       
+                    </select>
                     <span for="TipodePago" class="text-danger"></span>
                 </div>
             </div>
